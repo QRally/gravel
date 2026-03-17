@@ -3,27 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Rally Crew Pro v2.3</title>
+    <title>Rally Crew Pro v2.6</title>
     <style>
-        :root { --rally-orange: #ff6600; --dark-bg: #1a1a1a; --card-bg: #333; --text: #f0f0f0; --safety-green: #25D366; --reset-blue: #3498db; }
-        body.night-mode { --rally-orange: #990000; --dark-bg: #000; --card-bg: #1a0000; --text: #ff3333; --safety-green: #660000; --reset-blue: #1a3a5a; }
-        
+        :root { --rally-orange: #ff6600; --dark-bg: #1a1a1a; --card-bg: #333; --text: #f0f0f0; --safety-green: #25D366; --reset-blue: #3498db; --trip-red: #e74c3c; }
+        body.night-mode { --rally-orange: #990000; --dark-bg: #000; --card-bg: #1a0000; --text: #ff3333; --safety-green: #660000; --reset-blue: #1a3a5a; --trip-red: #5e1911; }
         body { font-family: sans-serif; background: var(--dark-bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; transition: 0.3s; box-sizing: border-box; }
         header { padding: 10px; background: #000; text-align: center; border-bottom: 2px solid var(--rally-orange); position: relative; flex-shrink: 0; }
         .night-toggle { position: absolute; right: 10px; top: 12px; background: #444; border: none; color: white; padding: 5px 10px; border-radius: 4px; font-size: 0.7rem; }
-        
-        main { flex: 1; padding: 15px; display: flex; flex-direction: column; gap: 12px; align-items: center; overflow-y: auto; box-sizing: border-box; width: 100%; }
+        main { flex: 1; padding: 15px; display: flex; flex-direction: column; gap: 12px; align-items: center; overflow-y: auto; width: 100%; box-sizing: border-box; }
         
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; box-sizing: border-box; }
-        .stat-box { background: var(--card-bg); padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #444; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+        .stat-box { background: var(--card-bg); padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #444; }
         
         .label { font-size: 0.65rem; text-transform: uppercase; opacity: 0.8; margin-bottom: 5px; }
         .value { font-family: monospace; font-size: 0.95rem; font-weight: bold; word-break: break-all; }
         
-        /* Fixed ODO Input Overhang */
-        .odo-input { width: 100%; background: #222; border: 1px solid #555; color: white; padding: 10px 0; border-radius: 5px; text-align: center; font-size: 1.1rem; box-sizing: border-box; }
-
-        .freeze-btn { width: 140px; height: 140px; border-radius: 50%; background: var(--rally-orange); color: white; border: 8px solid rgba(0,0,0,0.2); font-weight: bold; font-size: 1.1rem; cursor: pointer; flex-shrink: 0; }
+        /* Centered Trip Reset */
+        .trip-container { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .reset-trip-btn { background: var(--trip-red); color: white; border: none; border-radius: 4px; font-size: 0.6rem; padding: 4px 10px; font-weight: bold; text-transform: uppercase; }
+        
+        .odo-input { width: 100%; background: #222; border: 1px solid #555; color: var(--rally-orange); padding: 8px 0; border-radius: 5px; text-align: center; font-size: 1.2rem; font-weight: bold; box-sizing: border-box; }
+        
+        .freeze-btn { width: 140px; height: 140px; border-radius: 50%; background: var(--rally-orange); color: white; border: 8px solid rgba(0,0,0,0.2); font-weight: bold; font-size: 1.1rem; cursor: pointer; flex-shrink: 0; margin: 10px 0; }
         
         .quick-notes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; width: 100%; }
         .note-tag { background: var(--card-bg); border: 1px solid #555; color: var(--text); padding: 12px 2px; border-radius: 5px; font-weight: bold; font-size: 0.6rem; text-transform: uppercase; }
@@ -36,70 +37,98 @@
     </style>
 </head>
 <body>
-
     <header>
         <div id="gps-status" style="font-size: 0.7rem; color: #00ff00;">● GPS ACTIVE</div>
-        <h3 style="margin:5px 0; font-size: 1.1rem;">GRAVEL CREW PRO v2.3</h3>
+        <h3 style="margin:5px 0;">GRAVEL CREW PRO v2.6</h3>
         <button class="night-toggle" onclick="toggleNightMode()">NIGHT</button>
     </header>
-
     <main>
         <div class="stat-grid">
             <div class="stat-box">
                 <div class="label">Coordinates</div>
-                <div id="coords" class="value">--.--- , --.---</div>
+                <div id="coords" class="value">Searching...</div>
             </div>
-            <div class="stat-box">
-                <div class="label">Stage KM</div>
-                <input type="number" id="odo" class="odo-input" placeholder="0.00" step="0.01">
+            <div class="stat-box trip-container">
+                <div class="label">Trip Miles</div>
+                <input type="number" id="odo" class="odo-input" value="0.00" step="0.01">
+                <button class="reset-trip-btn" onclick="resetTrip()">RESET TRIP</button>
             </div>
         </div>
-
-        <button id="mainButton" class="freeze-btn" onclick="freezeLocation()">FREEZE<br>HAZARD</button>
-
+        
+        <button class="freeze-btn" onclick="freezeLocation()">FREEZE<br>HAZARD</button>
+        
         <div class="quick-notes">
             <button class="note-tag" onclick="addNote('ROCK')">ROCK</button>
             <button class="note-tag" onclick="addNote('DON\'T CUT')">DON'T CUT</button>
             <button class="note-tag" onclick="addNote('SLIPPY')">SLIPPY</button>
             <button class="note-tag" onclick="addNote('CAR OFF')">CAR OFF</button>
         </div>
-
+        
         <textarea id="noteField" placeholder="Notes..." rows="2"></textarea>
         
         <div class="action-row">
-            <button class="reset-btn" onclick="resetApp()">NEXT<br>HAZARD</button>
+            <button class="reset-btn" onclick="resetHazard()">NEXT<br>HAZARD</button>
             <button class="send-btn" onclick="sendToTeam()">SEND TO TEAM</button>
         </div>
     </main>
-
     <script>
+        let lastLat = null, lastLon = null, totalTripMiles = 0;
         let currentLat = 0, currentLon = 0, frozenLat = 0, frozenLon = 0;
         const synth = window.speechSynthesis;
 
         function speak(text) {
             const utter = new SpeechSynthesisUtterance(text);
-            utter.rate = 1.3;
-            synth.speak(utter);
+            utter.rate = 1.3; synth.speak(utter);
+        }
+
+        function calcDist(lat1, lon1, lat2, lon2) {
+            const R = 3958.8; // Miles
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
         if (navigator.geolocation) {
             navigator.geolocation.watchPosition((p) => {
-                currentLat = p.coords.latitude.toFixed(6);
-                currentLon = p.coords.longitude.toFixed(6);
+                const newLat = p.coords.latitude;
+                const newLon = p.coords.longitude;
+
+                // Removed the high threshold so it picks up walking speeds
+                if (lastLat !== null && !frozenLat) {
+                    const incrementalDist = calcDist(lastLat, lastLon, newLat, newLon);
+                    // Minimal check to avoid duplicate points
+                    if (incrementalDist > 0.0001) { 
+                        totalTripMiles += incrementalDist;
+                        document.getElementById('odo').value = totalTripMiles.toFixed(2);
+                    }
+                }
+                lastLat = newLat; lastLon = newLon;
+                currentLat = newLat.toFixed(6); currentLon = newLon.toFixed(6);
+                
                 if(!frozenLat) {
                     document.getElementById('coords').innerText = `${currentLat}, ${currentLon}`;
-                    document.getElementById('coords').style.color = "var(--text)";
                 }
-            }, null, { enableHighAccuracy: true });
+            }, (err) => {
+                console.error(err);
+                document.getElementById('gps-status').innerText = "● GPS ERROR";
+                document.getElementById('gps-status').style.color = "red";
+            }, { enableHighAccuracy: true, maximumAge: 1000 });
         }
 
         function freezeLocation() {
-            frozenLat = currentLat;
-            frozenLon = currentLon;
+            frozenLat = currentLat; frozenLon = currentLon;
             document.getElementById('coords').innerText = `${frozenLat}, ${frozenLon}`;
             document.getElementById('coords').style.color = "var(--rally-orange)";
-            speak("Location locked");
+            speak("Frozen");
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        }
+
+        function resetTrip() {
+            totalTripMiles = 0; lastLat = null; lastLon = null;
+            document.getElementById('odo').value = "0.00";
+            speak("Trip Zeroed");
         }
 
         function addNote(text) {
@@ -107,27 +136,23 @@
             speak(text);
         }
 
-        function resetApp() {
-            frozenLat = 0;
-            frozenLon = 0;
+        function resetHazard() {
+            frozenLat = 0; frozenLon = 0;
             document.getElementById('noteField').value = "";
             document.getElementById('coords').innerText = `${currentLat}, ${currentLon}`;
             document.getElementById('coords').style.color = "var(--text)";
-            speak("System Reset");
-            if (navigator.vibrate) navigator.vibrate(50);
+            speak("Next");
         }
 
-        function toggleNightMode() {
-            document.body.classList.toggle('night-mode');
-        }
+        function toggleNightMode() { document.body.classList.toggle('night-mode'); }
 
         function sendToTeam() {
-            const odo = document.getElementById('odo').value || "N/A";
+            const miles = document.getElementById('odo').value;
             const notes = document.getElementById('noteField').value;
             const lat = frozenLat || currentLat;
             const lon = frozenLon || currentLon;
             const mapUrl = `https://www.google.com/maps?q=${lat},${lon}`;
-            const msg = `⚠️ RALLY ALERT\nKM: ${odo}\nLOC: ${lat}, ${lon}\nNOTE: ${notes}\nMAP: ${mapUrl}`;
+            const msg = `⚠️ RALLY ALERT\nMILES: ${miles}\nLOC: ${lat}, ${lon}\nNOTE: ${notes}\nMAP: ${mapUrl}`;
             window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
         }
     </script>
